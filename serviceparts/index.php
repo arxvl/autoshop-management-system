@@ -6,7 +6,21 @@ global $pdo;
 
 $pageTitle = "Log Parts Used";
 
-$records = $pdo->query("SELECT ServiceRecordID FROM ServiceRecord_T WHERE Stat != 'Completed' ORDER BY DateReceived DESC")->fetchAll();
+// 1. Fetch active service records WITH their Customer and Vehicle info!
+$records = $pdo->query("
+    SELECT 
+        sr.ServiceRecordID, 
+        c.CustomerName, 
+        v.VehiclePlateNumber, 
+        v.VehicleModel 
+    FROM ServiceRecord_T sr
+    LEFT JOIN Order_T o ON sr.OrderID = o.OrderID
+    LEFT JOIN Customer_T c ON o.CustomerID = c.CustomerID
+    LEFT JOIN Vehicle_T v ON sr.VehicleID = v.VehicleID
+    WHERE sr.Stat != 'Completed' 
+    ORDER BY sr.DateReceived DESC
+")->fetchAll();
+
 $parts = $pdo->query("SELECT PartID, PartName, UnitPrice, QuantityInStock FROM Part_T WHERE QuantityInStock > 0 ORDER BY PartName")->fetchAll();
 
 // --- Handle POST Requests ---
@@ -16,15 +30,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'add') {
             $pdo->beginTransaction();
             
-            // CORRECTED: Uses PartsUsed_T, QuantityUsed, and Subtotal
-            $stmt1 = $pdo->prepare("INSERT INTO PartsUsed_T (ServiceRecordID, PartID, QuantityUsed, Subtotal) VALUES (?, ?, ?, ?)");
-            $stmt1->execute([$_POST['ServiceRecordID'], $_POST['PartID'], $_POST['QuantityUsed'], $_POST['Subtotal']]);
-            
-            $stmt2 = $pdo->prepare("UPDATE Part_T SET QuantityInStock = QuantityInStock - ? WHERE PartID = ?");
-            $stmt2->execute([$_POST['QuantityUsed'], $_POST['PartID']]);
+            $serviceRecordID = $_POST['ServiceRecordID'];
+            $partID = $_POST['PartID'];
+            $quantityAdded = (int)$_POST['QuantityUsed'];
+            $subtotalAdded = (float)$_POST['Subtotal'];
 
+            // 1. Check if this exact part is ALREADY in this exact Service Record
+            $checkStmt = $pdo->prepare("SELECT QuantityUsed, Subtotal FROM PartsUsed_T WHERE ServiceRecordID = ? AND PartID = ?");
+            $checkStmt->execute([$serviceRecordID, $partID]);
+            $existingPart = $checkStmt->fetch();
+
+            if ($existingPart) {
+                // UPDATE: It already exists! Just add the new quantity and subtotal to the old ones to prevent duplicates.
+                $newQty = $existingPart['QuantityUsed'] + $quantityAdded;
+                $newSubtotal = $existingPart['Subtotal'] + $subtotalAdded;
+                
+                $updateStmt = $pdo->prepare("UPDATE PartsUsed_T SET QuantityUsed = ?, Subtotal = ? WHERE ServiceRecordID = ? AND PartID = ?");
+                $updateStmt->execute([$newQty, $newSubtotal, $serviceRecordID, $partID]);
+            } else {
+                // INSERT: It's a brand new part for this record.
+                $insertStmt = $pdo->prepare("INSERT INTO PartsUsed_T (ServiceRecordID, PartID, QuantityUsed, Subtotal) VALUES (?, ?, ?, ?)");
+                $insertStmt->execute([$serviceRecordID, $partID, $quantityAdded, $subtotalAdded]);
+            }
+            
+            // 2. Deduct from Master Inventory
+            $stmtInv = $pdo->prepare("UPDATE Part_T SET QuantityInStock = QuantityInStock - ? WHERE PartID = ?");
+            $stmtInv->execute([$quantityAdded, $partID]);
+
+            // 3. Sync Total Parts Cost to the Service Record
             $syncStmt = $pdo->prepare("UPDATE ServiceRecord_T SET TotalPartsCost = (SELECT COALESCE(SUM(Subtotal), 0) FROM PartsUsed_T WHERE ServiceRecordID = ?) WHERE ServiceRecordID = ?");
-            $syncStmt->execute([$_POST['ServiceRecordID'], $_POST['ServiceRecordID']]);
+            $syncStmt->execute([$serviceRecordID, $serviceRecordID]);
             
             $pdo->commit();
             $_SESSION['success_msg'] = "Part logged, inventory deducted, and total updated!";
@@ -54,6 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // --- Fetch Joined Data ---
 $searchQuery = $_GET['q'] ?? '';
+
+// Upgraded query to pull Customer and Vehicle data for the main table!
 $sql = "SELECT 
             pu.ServiceRecordID, 
             pu.PartID,
@@ -61,14 +98,21 @@ $sql = "SELECT
             pu.QuantityUsed, 
             p.UnitPrice, 
             pu.Subtotal,
+            c.CustomerName,
+            v.VehiclePlateNumber,
+            v.VehicleModel,
             CONCAT(pu.ServiceRecordID, '|', pu.PartID, '|', pu.QuantityUsed) as CompositeID 
         FROM PartsUsed_T pu 
-        JOIN Part_T p ON pu.PartID = p.PartID";
+        JOIN Part_T p ON pu.PartID = p.PartID
+        LEFT JOIN ServiceRecord_T sr ON pu.ServiceRecordID = sr.ServiceRecordID
+        LEFT JOIN Order_T o ON sr.OrderID = o.OrderID
+        LEFT JOIN Customer_T c ON o.CustomerID = c.CustomerID
+        LEFT JOIN Vehicle_T v ON sr.VehicleID = v.VehicleID";
 
 $params = [];
 if ($searchQuery) {
-    $sql .= " WHERE pu.ServiceRecordID LIKE ? OR p.PartName LIKE ?";
-    $params = ["%$searchQuery%", "%$searchQuery%"];
+    $sql .= " WHERE pu.ServiceRecordID LIKE ? OR p.PartName LIKE ? OR c.CustomerName LIKE ?";
+    $params = ["%$searchQuery%", "%$searchQuery%", "%$searchQuery%"];
 }
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
@@ -77,10 +121,16 @@ $tableData = $stmt->fetchAll();
 foreach ($tableData as &$row) {
     $row['UnitPrice'] = "₱" . number_format($row['UnitPrice'], 2);
     $row['Subtotal'] = "₱" . number_format($row['Subtotal'], 2);
+    
+    // Add text emojis for the table display context
+    $veh = $row['VehiclePlateNumber'] ? " 🚗 {$row['VehiclePlateNumber']} [{$row['VehicleModel']}]" : " 🚶 Walk-in";
+    $row['CustomerDisplay'] = $row['CustomerName'] . $veh;
 }
+unset($row); // 🚨 THE MAGIC BUG FIX IS RIGHT HERE! 🚨
 
 $tableHeaders = [
     'ServiceRecordID' => 'Record Ref', 
+    'CustomerDisplay' => 'Customer & Vehicle',
     'PartName' => 'Part Used', 
     'QuantityUsed' => 'Qty Used', 
     'UnitPrice' => 'Unit Price', 
@@ -102,7 +152,7 @@ include '../includes/header.php'; include '../includes/navbar.php';
         <?php include '../components/search.php'; include '../components/table.php'; ?>
         
         <div id="addModal" class="modal-overlay">
-            <div class="modal-content">
+            <div class="modal-content" style="max-width: 650px;">
                 <div class="modal-header">
                     <h2>Attach Part to Record</h2>
                     <button class="btn-close" type="button" onclick="closeModal('addModal')">&times;</button>
@@ -112,16 +162,22 @@ include '../includes/header.php'; include '../includes/navbar.php';
                         <input type="hidden" name="action" value="add">
                         
                         <div class="form-row">
-                            <div class="form-group" style="flex: 1;">
-                                <label>Service Record ID</label>
-                                <select name="ServiceRecordID" required>
-                                    <option value="">Select Active Record...</option>
-                                    <?php foreach($records as $r) echo "<option value='{$r['ServiceRecordID']}'>{$r['ServiceRecordID']}</option>"; ?>
+                            <div class="form-group" style="flex: 2;">
+                                <label>Target Service Record</label>
+                                <select name="ServiceRecordID" required style="width: 100%; box-sizing: border-box; padding: 0.6rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                                    <option value="">Select Target Record...</option>
+                                    <?php foreach($records as $r): 
+                                        $veh = $r['VehiclePlateNumber'] ? " 🚗 {$r['VehiclePlateNumber']} [{$r['VehicleModel']}]" : " 🚶 Walk-in";
+                                    ?>
+                                        <option value="<?php echo $r['ServiceRecordID']; ?>">
+                                            <?php echo $r['ServiceRecordID'] . " - " . htmlspecialchars($r['CustomerName']) . $veh; ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="form-group" style="flex: 2;">
+                            <div class="form-group" style="flex: 1.5;">
                                 <label>Inventory Part</label>
-                                <select name="PartID" id="partSelect" required onchange="calculatePartCost()">
+                                <select name="PartID" id="partSelect" required onchange="calculatePartCost()" style="width: 100%; box-sizing: border-box; padding: 0.6rem; border: 1px solid #d1d5db; border-radius: 4px;">
                                     <option value="" data-price="0">Select Part from Stock...</option>
                                     <?php foreach($parts as $p) echo "<option value='{$p['PartID']}' data-price='{$p['UnitPrice']}'>{$p['PartName']} (In Stock: {$p['QuantityInStock']})</option>"; ?>
                                 </select>
@@ -131,17 +187,17 @@ include '../includes/header.php'; include '../includes/navbar.php';
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Quantity Used</label>
-                                <input type="number" name="QuantityUsed" id="qtyInput" required min="1" value="1" oninput="calculatePartCost()">
+                                <input type="number" name="QuantityUsed" id="qtyInput" required min="1" value="1" oninput="calculatePartCost()" style="width: 100%; box-sizing: border-box; padding: 0.6rem; border: 1px solid #d1d5db; border-radius: 4px;">
                             </div>
                             <div class="form-group">
                                 <label>Unit Price (₱)</label>
-                                <input type="number" id="priceInput" required step="0.01" min="0" readonly style="background: #f3f4f6;">
+                                <input type="number" id="priceInput" required step="0.01" min="0" readonly style="background: #f3f4f6; width: 100%; box-sizing: border-box; padding: 0.6rem; border: 1px solid #d1d5db; border-radius: 4px;">
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label>Total Subtotal (₱)</label>
-                            <input type="number" name="Subtotal" id="totalCostInput" required step="0.01" min="0" readonly style="background: #e0f2fe; color: #0369a1; font-weight: bold; border-color: #bae6fd;">
+                            <input type="number" name="Subtotal" id="totalCostInput" required step="0.01" min="0" readonly style="background: #e0f2fe; color: #0369a1; font-weight: bold; border-color: #bae6fd; width: 100%; box-sizing: border-box; padding: 0.6rem; border-radius: 4px;">
                         </div>
 
                         <div class="modal-footer">
@@ -158,6 +214,7 @@ include '../includes/header.php'; include '../includes/navbar.php';
 </div>
 
 <style>
+    /* Parts used is a linking table; we disable edit to enforce inventory strictness */
     .btn-edit { display: none !important; }
 </style>
 

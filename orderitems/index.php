@@ -127,37 +127,37 @@ include '../includes/header.php'; include '../includes/navbar.php';
                     <form method="POST" action="index.php">
                         <input type="hidden" name="action" value="add">
                         
-                        <div class="form-row">
-                            <div class="form-group" style="flex: 1;">
+                        <div class="form-row" style="display: flex; gap: 10px;">
+                            <div class="form-group" style="flex: 1; min-width: 0;">
                                 <label>Target Order</label>
-                                <select name="OrderID" required>
+                                <select name="OrderID" required style="width: 100%; box-sizing: border-box;">
                                     <option value="">Select Active Order...</option>
                                     <?php foreach($orders as $o) echo "<option value='{$o['OrderID']}'>{$o['OrderID']} - {$o['CustomerName']}</option>"; ?>
                                 </select>
                             </div>
-                            <div class="form-group" style="flex: 2;">
+                            <div class="form-group" style="flex: 1.5; min-width: 0;">
                                 <label>Inventory Part to Sell</label>
-                                <select name="PartID" id="partSelect" required onchange="calculateRetailCost()">
+                                <select name="PartID" id="partSelect" required onchange="calculateRetailCost()" style="width: 100%; box-sizing: border-box;">
                                     <option value="" data-price="0">Select Part...</option>
                                     <?php foreach($parts as $p) echo "<option value='{$p['PartID']}' data-price='{$p['UnitPrice']}'>{$p['PartName']} (In Stock: {$p['QuantityInStock']})</option>"; ?>
                                 </select>
                             </div>
                         </div>
                         
-                        <div class="form-row">
-                            <div class="form-group">
+                        <div class="form-row" style="display: flex; gap: 10px;">
+                            <div class="form-group" style="flex: 1; min-width: 0;">
                                 <label>Quantity to Sell</label>
-                                <input type="number" name="Quantity" id="qtyInput" required min="1" value="1" oninput="calculateRetailCost()">
+                                <input type="number" name="Quantity" id="qtyInput" required min="1" value="1" oninput="calculateRetailCost()" style="width: 100%; box-sizing: border-box;">
                             </div>
-                            <div class="form-group">
+                            <div class="form-group" style="flex: 1; min-width: 0;">
                                 <label>Unit Price (₱)</label>
-                                <input type="number" id="priceInput" required step="0.01" min="0" readonly style="background: #f3f4f6;">
+                                <input type="number" id="priceInput" required step="0.01" min="0" readonly style="background: #f3f4f6; width: 100%; box-sizing: border-box;">
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label>Total Subtotal (₱)</label>
-                            <input type="number" name="Subtotal" id="totalCostInput" required step="0.01" min="0" readonly style="background: #e0f2fe; color: #0369a1; font-weight: bold; border-color: #bae6fd;">
+                            <input type="number" name="Subtotal" id="totalCostInput" required step="0.01" min="0" readonly style="background: #e0f2fe; color: #0369a1; font-weight: bold; border-color: #bae6fd; width: 100%; box-sizing: border-box;">
                         </div>
 
                         <div class="modal-footer">

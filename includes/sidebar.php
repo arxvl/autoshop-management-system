@@ -37,7 +37,7 @@ $current_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
 
         <div class="menu-header">Operations & Staff</div>
         <li><a href="/autoshop_system/orders/index.php" class="<?php echo ($current_dir == 'orders') ? 'active' : ''; ?>"><i class="fa-solid fa-file-invoice"></i> Orders</a></li>
-        <li class="sub-item"><a href="/autoshop_system/orderitems/index.php" class="<?php echo ($current_dir == 'orderitems') ? 'active' : ''; ?>"><i class="fa-solid fa-box-open"></i> Retail Sales (OTC)</a></li>
+        <li class="sub-item"><a href="/autoshop_system/orderitems/index.php" class="<?php echo ($current_dir == 'orderitems') ? 'active' : ''; ?>"><i class="fa-solid fa-box-open"></i>Over the Counter</a></li>
 
         <li><a href="/autoshop_system/servicerecords/index.php" class="<?php echo ($current_dir == 'servicerecords') ? 'active' : ''; ?>"><i class="fa-solid fa-clipboard-list"></i> Service Records</a></li>
         <li class="sub-item"><a href="/autoshop_system/repairservices/index.php" class="<?php echo ($current_dir == 'repairservices') ? 'active' : ''; ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Log Services</a></li>
@@ -45,8 +45,7 @@ $current_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
         
         <li><a href="/autoshop_system/mechanics/index.php" class="<?php echo ($current_dir == 'mechanics') ? 'active' : ''; ?>"><i class="fa-solid fa-user-gear"></i> Mechanics</a></li>
         <li class="sub-item"><a href="/autoshop_system/mechanicassignments/index.php" class="<?php echo ($current_dir == 'mechanicassignments') ? 'active' : ''; ?>"><i class="fa-solid fa-wrench"></i> Job Assignments</a></li>
-        <li class="sub-item"><a href="/autoshop_system/mechanicskills/index.php" class="<?php echo ($current_dir == 'mechanicskills') ? 'active' : ''; ?>"><i class="fa-solid fa-star"></i> Service Skills</a></li>
-        <li class="sub-item"><a href="/autoshop_system/mechanicgeneralskills/index.php" class="<?php echo ($current_dir == 'mechanicgeneralskills') ? 'active' : ''; ?>"><i class="fa-solid fa-certificate"></i> Certifications</a></li>
+        <li class="sub-item"><a href="/autoshop_system/mechanicskills/index.php" class="<?php echo ($current_dir == 'mechanicskills') ? 'active' : ''; ?>"><i class="fa-solid fa-star"></i>Mechanic Skills</a></li>
 
         <div class="menu-header">Inventory</div>
         <li><a href="/autoshop_system/parts/index.php" class="<?php echo ($current_dir == 'parts') ? 'active' : ''; ?>"><i class="fa-solid fa-boxes-stacked"></i> Master Inventory</a></li>

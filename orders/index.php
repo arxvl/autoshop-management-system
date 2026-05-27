@@ -6,9 +6,16 @@ global $pdo;
 
 $pageTitle = "Manage Orders";
 
-$customers = $pdo->query("SELECT CustomerID, CustomerName FROM Customer_T ORDER BY CustomerName")->fetchAll();
+// We now use GROUP_CONCAT to fetch the actual Plate Number and Model of their vehicles!
+$customers = $pdo->query("
+    SELECT c.CustomerID, c.CustomerName, 
+           (SELECT GROUP_CONCAT(CONCAT(VehiclePlateNumber, ' [', VehicleModel, ']') SEPARATOR ', ') 
+            FROM Vehicle_T WHERE CustomerID = c.CustomerID) as OwnedVehicles
+    FROM Customer_T c 
+    ORDER BY c.CustomerName
+")->fetchAll();
 
-// --- BULLETPROOF SYNC: Automatically recalculate all Order Totals based on Service Records & Retail Parts ---
+// --- BULLETPROOF SYNC: Automatically recalculate all Order Totals ---
 try {
     $pdo->query("
         UPDATE Order_T o
@@ -27,24 +34,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if ($action === 'add') {
             $newOrderID = 'ORD-' . strtoupper(substr(uniqid(), -6));
-            
-            // Grand Total starts at 0. It is auto-calculated later!
             $stmt = $pdo->prepare("INSERT INTO Order_T (OrderID, CustomerID, OrderDate, OrderTotalAmount, OrderStatus) VALUES (?, ?, ?, 0.00, ?)");
             $stmt->execute([$newOrderID, $_POST['CustomerID'], $_POST['OrderDate'], $_POST['OrderStatus']]);
             $_SESSION['success_msg'] = "Order created successfully!";
         } 
         elseif ($action === 'edit') {
-            // LOCKED: OrderTotalAmount is NOT updated here. It is handled by the auto-sync!
             $stmt = $pdo->prepare("UPDATE Order_T SET CustomerID=?, OrderDate=?, OrderStatus=? WHERE OrderID=?");
             $stmt->execute([$_POST['CustomerID'], $_POST['OrderDate'], $_POST['OrderStatus'], $_POST['OrderID']]);
             $_SESSION['success_msg'] = "Order updated successfully!";
         }
         elseif ($action === 'delete') {
+            $pdo->beginTransaction();
+            $orderIDToDelete = $_POST['delete_id'];
+            
+            // INVENTORY SALVAGE: Return all OTC parts to stock
+            $stmtOTC = $pdo->prepare("SELECT PartID, Quantity FROM OrderItem_T WHERE OrderID = ?");
+            $stmtOTC->execute([$orderIDToDelete]);
+            foreach ($stmtOTC->fetchAll() as $item) {
+                $restore = $pdo->prepare("UPDATE Part_T SET QuantityInStock = QuantityInStock + ? WHERE PartID = ?");
+                $restore->execute([$item['Quantity'], $item['PartID']]);
+            }
+
+            // INVENTORY SALVAGE: Return all Service Bay parts to stock
+            $stmtSR = $pdo->prepare("
+                SELECT pu.PartID, pu.QuantityUsed 
+                FROM PartsUsed_T pu 
+                JOIN ServiceRecord_T sr ON pu.ServiceRecordID = sr.ServiceRecordID 
+                WHERE sr.OrderID = ?
+            ");
+            $stmtSR->execute([$orderIDToDelete]);
+            foreach ($stmtSR->fetchAll() as $item) {
+                $restore = $pdo->prepare("UPDATE Part_T SET QuantityInStock = QuantityInStock + ? WHERE PartID = ?");
+                $restore->execute([$item['QuantityUsed'], $item['PartID']]);
+            }
+            
+            // Delete the master Order
             $stmt = $pdo->prepare("DELETE FROM Order_T WHERE OrderID=?");
-            $stmt->execute([$_POST['delete_id']]);
-            $_SESSION['success_msg'] = "Order deleted successfully!";
+            $stmt->execute([$orderIDToDelete]);
+            
+            $pdo->commit();
+            $_SESSION['success_msg'] = "Order deleted and all attached parts returned to stock!";
         }
     } catch (PDOException $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
         $_SESSION['error_msg'] = "Database error: " . $e->getMessage();
     }
     redirect('index.php');
@@ -52,9 +84,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // --- Fetch Joined Data ---
 $searchQuery = $_GET['q'] ?? '';
+
+// Added OwnedVehicles subquery to fetch the specific vehicles for the main table!
 $sql = "SELECT 
             o.*, 
             c.CustomerName,
+            (SELECT GROUP_CONCAT(CONCAT(VehiclePlateNumber, ' [', VehicleModel, ']') SEPARATOR ', ') 
+             FROM Vehicle_T WHERE CustomerID = c.CustomerID) as OwnedVehicles,
             (SELECT COALESCE(SUM(TotalLaborCost + TotalPartsCost), 0) FROM ServiceRecord_T WHERE OrderID = o.OrderID) as ServiceTotal,
             (SELECT COALESCE(SUM(Subtotal), 0) FROM OrderItem_T WHERE OrderID = o.OrderID) as RetailTotal,
             (SELECT GROUP_CONCAT(ServiceRecordID SEPARATOR ', ') FROM ServiceRecord_T WHERE OrderID = o.OrderID) as LinkedServices,
@@ -74,11 +110,22 @@ $tableData = $stmt->fetchAll();
 
 foreach ($tableData as &$row) {
     $row['OrderTotalAmount'] = "₱" . number_format($row['OrderTotalAmount'], 2);
+    
+    // Shows the specific vehicle(s), or Walk-in if none exist
+    if (!empty($row['OwnedVehicles'])) {
+        $badge = "  ::" . $row['OwnedVehicles'];
+    } else {
+        $badge = "  ::Walk-in";
+    }
+    
+    $row['CustomerDisplay'] = $row['CustomerName'] . $badge;
 }
+unset($row);
 
+// Setup UI
 $tableHeaders = [
     'OrderID' => 'Order Ref', 
-    'CustomerName' => 'Customer', 
+    'CustomerDisplay' => 'Customer', 
     'LinkedServices' => 'Services (Repairs)',
     'LinkedRetailParts' => 'Retail Items (OTC)',
     'OrderTotalAmount' => 'Grand Total', 
@@ -109,9 +156,15 @@ include '../includes/header.php'; include '../includes/navbar.php';
                         <div class="form-row">
                             <div class="form-group" style="flex: 2;">
                                 <label>Customer</label>
-                                <select name="CustomerID" required>
+                                <select name="CustomerID" required style="width: 100%; box-sizing: border-box; padding: 0.6rem;">
                                     <option value="">Select Customer...</option>
-                                    <?php foreach($customers as $c) echo "<option value='{$c['CustomerID']}'>{$c['CustomerName']}</option>"; ?>
+                                    <?php foreach($customers as $c): 
+                                        $tag = !empty($c['OwnedVehicles']) ? "  ::" . $c['OwnedVehicles'] : "  ::Walk-in";
+                                    ?>
+                                        <option value="<?php echo $c['CustomerID']; ?>">
+                                            <?php echo htmlspecialchars($c['CustomerName']) . " - " . $tag; ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="form-group" style="flex: 1;">
@@ -160,8 +213,14 @@ include '../includes/header.php'; include '../includes/navbar.php';
                             </div>
                             <div class="form-group" style="flex: 2;">
                                 <label>Customer</label>
-                                <select name="CustomerID" id="edit_CustomerID" required>
-                                    <?php foreach($customers as $c) echo "<option value='{$c['CustomerID']}'>{$c['CustomerName']}</option>"; ?>
+                                <select name="CustomerID" id="edit_CustomerID" required style="width: 100%; box-sizing: border-box; padding: 0.6rem;">
+                                    <?php foreach($customers as $c): 
+                                        $tag = !empty($c['OwnedVehicles']) ? "  ::" . $c['OwnedVehicles'] : "  ::Walk-in";
+                                    ?>
+                                        <option value="<?php echo $c['CustomerID']; ?>">
+                                            <?php echo htmlspecialchars($c['CustomerName']) . " - " . $tag; ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                         </div>
@@ -233,7 +292,6 @@ include '../includes/header.php'; include '../includes/navbar.php';
             document.getElementById('edit_OrderDate').value = row.OrderDate;
             document.getElementById('edit_OrderStatus').value = row.OrderStatus;
 
-            // Populate Financial Summary
             document.getElementById('edit_LinkedServices').value = row.LinkedServices || 'No Service Records attached.';
             document.getElementById('edit_LinkedRetailParts').value = row.LinkedRetailParts || 'No Retail Items attached.';
             document.getElementById('edit_ServiceTotal').value = "₱" + parseFloat(row.ServiceTotal).toFixed(2);
