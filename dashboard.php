@@ -105,7 +105,7 @@ include 'includes/navbar.php';
         <div class="dashboard-sections">
             
             <div class="section-card">
-                <h3><i class="fa-solid fa-bolt" style="color: #f59e0b;"></i> Quick Actions</h3>
+                <h3><i class="fa-solid" style="color: #f59e0b;"></i> Quick Actions</h3>
                 <div class="quick-actions">
                     <a href="orders/index.php" class="action-btn blue">
                         <i class="fa-solid fa-file-invoice"></i>

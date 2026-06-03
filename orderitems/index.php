@@ -24,13 +24,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'add') {
             $pdo->beginTransaction();
             
-            // 1. Link the retail part to the Order directly
-            $stmt1 = $pdo->prepare("INSERT INTO OrderItem_T (OrderID, PartID, Quantity, Subtotal) VALUES (?, ?, ?, ?)");
-            $stmt1->execute([$_POST['OrderID'], $_POST['PartID'], $_POST['Quantity'], $_POST['Subtotal']]);
+            $orderID = $_POST['OrderID'];
+            $partID = $_POST['PartID'];
+            $quantityAdded = (int)$_POST['Quantity'];
+            $subtotalAdded = (float)$_POST['Subtotal'];
+
+            // 1. Check if this exact part is ALREADY in this exact Order
+            $checkStmt = $pdo->prepare("SELECT Quantity, Subtotal FROM OrderItem_T WHERE OrderID = ? AND PartID = ?");
+            $checkStmt->execute([$orderID, $partID]);
+            $existingItem = $checkStmt->fetch();
+
+            if ($existingItem) {
+                // UPDATE: It already exists! Add the new quantity and subtotal to prevent duplicates.
+                $newQty = $existingItem['Quantity'] + $quantityAdded;
+                $newSubtotal = $existingItem['Subtotal'] + $subtotalAdded;
+                
+                $updateStmt = $pdo->prepare("UPDATE OrderItem_T SET Quantity = ?, Subtotal = ? WHERE OrderID = ? AND PartID = ?");
+                $updateStmt->execute([$newQty, $newSubtotal, $orderID, $partID]);
+            } else {
+                // INSERT: It's a brand new retail item for this order.
+                $insertStmt = $pdo->prepare("INSERT INTO OrderItem_T (OrderID, PartID, Quantity, Subtotal) VALUES (?, ?, ?, ?)");
+                $insertStmt->execute([$orderID, $partID, $quantityAdded, $subtotalAdded]);
+            }
             
             // 2. Deduct from Inventory
             $stmt2 = $pdo->prepare("UPDATE Part_T SET QuantityInStock = QuantityInStock - ? WHERE PartID = ?");
-            $stmt2->execute([$_POST['Quantity'], $_POST['PartID']]);
+            $stmt2->execute([$quantityAdded, $partID]);
+            
+            // 3. AUTO-SYNC: Update the Master Order Grand Total!
+            $syncStmt = $pdo->prepare("
+                UPDATE Order_T o
+                SET OrderTotalAmount = (
+                    COALESCE((SELECT SUM(TotalLaborCost + TotalPartsCost) FROM ServiceRecord_T WHERE OrderID = o.OrderID), 0) +
+                    COALESCE((SELECT SUM(Subtotal) FROM OrderItem_T WHERE OrderID = o.OrderID), 0)
+                ) WHERE OrderID = ?
+            ");
+            $syncStmt->execute([$orderID]);
             
             $pdo->commit();
             $_SESSION['success_msg'] = "Retail item added to Order and inventory deducted!";
@@ -46,6 +75,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // 2. Restore to Inventory
             $stmt2 = $pdo->prepare("UPDATE Part_T SET QuantityInStock = QuantityInStock + ? WHERE PartID = ?");
             $stmt2->execute([$qty, $partID]);
+            
+            // 3. AUTO-SYNC: Update the Master Order Grand Total!
+            $syncStmt = $pdo->prepare("
+                UPDATE Order_T o
+                SET OrderTotalAmount = (
+                    COALESCE((SELECT SUM(TotalLaborCost + TotalPartsCost) FROM ServiceRecord_T WHERE OrderID = o.OrderID), 0) +
+                    COALESCE((SELECT SUM(Subtotal) FROM OrderItem_T WHERE OrderID = o.OrderID), 0)
+                ) WHERE OrderID = ?
+            ");
+            $syncStmt->execute([$orderID]);
             
             $pdo->commit();
             $_SESSION['success_msg'] = "Retail item removed from Order and returned to stock!";
@@ -86,6 +125,7 @@ foreach ($tableData as &$row) {
     $row['UnitPrice'] = "₱" . number_format($row['UnitPrice'], 2);
     $row['Subtotal'] = "₱" . number_format($row['Subtotal'], 2);
 }
+unset($row); // 🚨 THE MAGIC BUG FIX IS RIGHT HERE! 🚨
 
 $tableHeaders = [
     'OrderID' => 'Order Ref', 
@@ -108,7 +148,7 @@ include '../includes/header.php'; include '../includes/navbar.php';
         <?php include '../includes/alerts.php'; ?>
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h2 style="margin: 0;">Over-the-Counter Sales (Order Items)</h2>
+            <h2 style="margin: 0;">Over the Counter</h2>
         </div>
 
         <div style="background: #e0f2fe; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; color: #0369a1; font-size: 0.9em; border: 1px solid #bae6fd;">

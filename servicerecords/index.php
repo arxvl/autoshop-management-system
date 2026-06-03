@@ -22,9 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if ($action === 'add' || $action === 'edit') {
             
-            // 🚨 MAGIC BACKEND FIX 🚨
-            // Even though the UI only asks for the OrderID, the database requires the CustomerID and VehicleID.
-            // We fetch them here automatically so the database Foreign Key constraints don't crash!
             $targetOrderID = $_POST['OrderID'];
             
             // 1. Get CustomerID
@@ -158,7 +155,7 @@ include '../includes/header.php'; include '../includes/navbar.php';
                             <select name="OrderID" required style="width: 100%; box-sizing: border-box; padding: 0.6rem;">
                                 <option value="">Select Master Order...</option>
                                 <?php foreach($orders as $o): 
-                                    $vehicleContext = !empty($o['OwnedVehicles']) ? " 🚗 " . $o['OwnedVehicles'] : " 🚶 Walk-in";
+                                    $vehicleContext = !empty($o['OwnedVehicles']) ? " :: " . $o['OwnedVehicles'] : " :: Walk-in";
                                 ?>
                                     <option value="<?php echo $o['OrderID']; ?>">
                                         <?php echo $o['OrderID'] . " - " . htmlspecialchars($o['CustomerName']) . $vehicleContext; ?>
@@ -222,7 +219,7 @@ include '../includes/header.php'; include '../includes/navbar.php';
                                 <label>Target Order</label>
                                 <select name="OrderID" id="edit_OrderID" required style="width: 100%; box-sizing: border-box;">
                                     <?php foreach($orders as $o): 
-                                        $vehicleContext = !empty($o['OwnedVehicles']) ? " 🚗 " . $o['OwnedVehicles'] : " 🚶 Walk-in";
+                                        $vehicleContext = !empty($o['OwnedVehicles']) ? " ::" . $o['OwnedVehicles'] : " ::Walk-in";
                                     ?>
                                         <option value="<?php echo $o['OrderID']; ?>">
                                             <?php echo $o['OrderID'] . " - " . htmlspecialchars($o['CustomerName']) . $vehicleContext; ?>
