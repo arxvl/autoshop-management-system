@@ -151,7 +151,7 @@ include '../includes/header.php'; include '../includes/navbar.php';
             <h2 style="margin: 0;">Over the Counter</h2>
         </div>
 
-        <div style="background: #e0f2fe; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; color: #0369a1; font-size: 0.9em; border: 1px solid #bae6fd;">
+        <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; color: #4b5563; font-size: 0.9em; border: 1px solid #e5e7eb;">
             <strong><i class="fa-solid fa-circle-info"></i> How to use this page:</strong> This page is for selling parts directly to a customer <em>without</em> doing a repair. First, create an Order on the <strong>Orders</strong> page, then come here to attach the items they are buying.
         </div>
         

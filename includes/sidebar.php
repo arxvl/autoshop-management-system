@@ -1,22 +1,28 @@
 <?php
 // includes/sidebar.php
-// Get the current script name to highlight the active menu item
 $current_page = basename($_SERVER['SCRIPT_NAME']);
 $current_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
 ?>
 <style>
-    .sidebar { width: 250px; background: #fff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; }
+    .sidebar { width: 260px; background: var(--bg-sidebar); border-right: 1px solid #374151; display: flex; flex-direction: column; color: var(--text-sidebar); }
     .sidebar-menu { list-style: none; padding: 1rem 0; margin: 0; flex: 1; overflow-y: auto; }
-    .sidebar-menu li { margin-bottom: 0.25rem; }
-    .sidebar-menu a { display: flex; align-items: center; padding: 0.75rem 1.5rem; color: var(--text-light); text-decoration: none; font-weight: 500; transition: all 0.2s; }
-    .sidebar-menu a i { width: 25px; font-size: 1.1em; }
-    .sidebar-menu a:hover { background: #f9fafb; color: var(--accent); }
-    .sidebar-menu a.active { background: #eff6ff; color: var(--accent); border-right: 3px solid var(--accent); }
-    .menu-header { padding: 1rem 1.5rem 0.5rem; font-size: 0.75rem; text-transform: uppercase; color: #9ca3af; font-weight: bold; letter-spacing: 0.05em; }
+    .sidebar-menu li { margin-bottom: 0.15rem; }
+    .sidebar-menu a { display: flex; align-items: center; padding: 0.75rem 1.5rem; color: #9ca3af; text-decoration: none; font-weight: 600; font-size: 0.85em; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.05em; }
+    .sidebar-menu a i { width: 30px; font-size: 1.2em; color: #6b7280; }
+    
+    .sidebar-menu a:hover { background: var(--bg-sidebar-hover); color: #fff; }
+    .sidebar-menu a:hover i { color: #fff; }
+    
+    .sidebar-menu a.active { background: #000; color: #fff; border-left: 4px solid var(--accent); padding-left: calc(1.5rem - 4px); }
+    .sidebar-menu a.active i { color: var(--accent); }
+    
+    .menu-header { padding: 1.5rem 1.5rem 0.5rem; font-size: 0.7rem; text-transform: uppercase; color: #4b5563; font-weight: 900; letter-spacing: 0.1em; border-bottom: 1px solid #1f2937; margin-bottom: 0.5rem; }
     
     /* Indentation for sub-items */
-    .sub-item a { padding-left: 3rem; font-size: 0.9em; }
-    .sub-item a i { width: 20px; font-size: 0.9em; }
+    .sub-item a { padding-left: 3.5rem; font-size: 0.8em; font-weight: 500; color: #6b7280; }
+    .sub-item a i { width: 25px; font-size: 0.9em; }
+    .sub-item a.active { border-left: none; background: transparent; color: var(--accent); padding-left: 3.5rem; }
+    .sub-item a.active i { color: var(--accent); }
 </style>
 
 <div class="sidebar">

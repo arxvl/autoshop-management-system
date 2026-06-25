@@ -123,7 +123,7 @@ foreach ($tableData as &$row) {
     $row['Subtotal'] = "₱" . number_format($row['Subtotal'], 2);
     
     // Add text emojis for the table display context
-    $veh = $row['VehiclePlateNumber'] ? " 🚗 {$row['VehiclePlateNumber']} [{$row['VehicleModel']}]" : " 🚶 Walk-in";
+    $veh = $row['VehiclePlateNumber'] ? " :: {$row['VehiclePlateNumber']} [{$row['VehicleModel']}]" : " :: Walk-in";
     $row['CustomerDisplay'] = $row['CustomerName'] . $veh;
 }
 unset($row); // 🚨 THE MAGIC BUG FIX IS RIGHT HERE! 🚨
@@ -167,7 +167,7 @@ include '../includes/header.php'; include '../includes/navbar.php';
                                 <select name="ServiceRecordID" required style="width: 100%; box-sizing: border-box; padding: 0.6rem; border: 1px solid #d1d5db; border-radius: 4px;">
                                     <option value="">Select Target Record...</option>
                                     <?php foreach($records as $r): 
-                                        $veh = $r['VehiclePlateNumber'] ? " 🚗 {$r['VehiclePlateNumber']} [{$r['VehicleModel']}]" : " 🚶 Walk-in";
+                                        $veh = $r['VehiclePlateNumber'] ? " :: {$r['VehiclePlateNumber']} [{$r['VehicleModel']}]" : " :: Walk-in";
                                     ?>
                                         <option value="<?php echo $r['ServiceRecordID']; ?>">
                                             <?php echo $r['ServiceRecordID'] . " - " . htmlspecialchars($r['CustomerName']) . $veh; ?>

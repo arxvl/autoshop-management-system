@@ -33,7 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: #1f2937; /* Dark background to match dashboard nav */
+            background-color: #111827; /* Midnight Asphalt */
+            background-image: radial-gradient(#374151 1px, transparent 1px); /* Subtle industrial grip texture */
+            background-size: 20px 20px;
             display: flex; 
             justify-content: center; 
             align-items: center; 
@@ -41,94 +43,119 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin: 0; 
         }
         .login-box { 
-            background: #e7e6e6; 
+            background: #ffffff; 
             padding: 3rem; 
-            border-radius: 10px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+            border-radius: 2px; /* Sharp corners */
+            border: 1px solid #9ca3af;
+            border-top: 5px solid #dc2626; /* Engine Red Accent */
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.4); /* Blocky rugged shadow */
             width: 100%; 
             max-width: 350px; 
         }
         .brand-header {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
             color: #1f2937;
         }
         .brand-header i {
             font-size: 3rem;
-            color: #3b82f6; /* Accent color */
+            color: #dc2626; /* Engine Red */
             margin-bottom: 1rem;
         }
         .brand-header h2 { 
             margin: 0; 
             font-size: 1.5rem;
+            text-transform: uppercase;
+            font-weight: 900;
+            letter-spacing: 0.05em;
         }
         .form-group { margin-bottom: 1.5rem; position: relative; }
-        .form-group label { display: block; margin-bottom: 0.5rem; color: #4b5563; font-size: 0.9em; font-weight: 500;}
+        .form-group label { 
+            display: block; 
+            margin-bottom: 0.5rem; 
+            color: #4b5563; 
+            font-size: 0.8em; 
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
         .form-group input { 
             width: 100%; 
             padding: 0.75rem 0.75rem 0.75rem 2.5rem; /* Padding for the icon */
-            border: 1px solid #d1d5db; 
-            border-radius: 6px; 
+            border: 1px solid #9ca3af; 
+            border-radius: 2px; 
             box-sizing: border-box; 
             font-size: 1rem;
-            transition: border-color 0.2s;
+            font-family: inherit;
         }
         .form-group input:focus {
             outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: #1f2937;
+            box-shadow: 0 0 0 1px #1f2937;
         }
         .form-group i {
             position: absolute;
             left: 0.85rem;
-            top: 2.3rem;
-            color: #9ca3af;
+            top: 2.15rem;
+            color: #6b7280;
         }
         .btn { 
             width: 100%; 
             padding: 0.85rem; 
-            background: #3b82f6; 
+            background: #dc2626; 
             color: #fff; 
             border: none; 
-            border-radius: 6px; 
+            border-radius: 2px; 
             cursor: pointer; 
-            font-size: 1.05em; 
-            font-weight: 600; 
-            transition: background 0.2s;
-        }
-        .btn:hover { background: #2563eb; }
-        .error { 
-            background: #fee2e2; 
-            color: #b91c1c; 
-            padding: 0.75rem; 
-            border-radius: 6px; 
-            margin-bottom: 1.5rem; 
             font-size: 0.9em; 
+            font-weight: 800; 
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.15);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .btn:hover { background: #b91c1c; }
+        .btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+        .error { 
+            background: #fef2f2; 
+            color: #7f1d1d; 
+            padding: 0.75rem; 
+            border-radius: 2px; 
+            margin-bottom: 1.5rem; 
+            font-size: 0.85em; 
             text-align: center; 
-            border-left: 4px solid #ef4444;
+            border: 1px solid #fecaca;
+            border-left: 4px solid #dc2626;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
     </style>
 </head>
 <body>
     <div class="login-box">
         <div class="brand-header">
+            <i class="fa-solid fa-wrench"></i>
             <h2>System Login</h2>
         </div>
 
         <?php if ($error): ?>
-            <div class="error"><i class="fa-solid fa-circle-exclamation"></i> <?php echo $error; ?></div>
+            <div class="error"><i class="fa-solid fa-triangle-exclamation"></i> <?php echo $error; ?></div>
         <?php endif; ?>
 
         <form method="POST" action="login.php">
             <div class="form-group">
                 <label for="username">Username</label>
                 <i class="fa-solid fa-user"></i>
-                <input type="text" name="username" id="username" required autocomplete="off" placeholder="Enter your username">
+                <input type="text" name="username" id="username" required autocomplete="off" placeholder="Enter ID">
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" name="password" id="password" required placeholder="Enter your password">
+                <input type="password" name="password" id="password" required placeholder="Enter Passkey">
             </div>
             <button type="submit" class="btn">Sign In</button>
         </form>

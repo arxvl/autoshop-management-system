@@ -35,41 +35,70 @@ include 'includes/navbar.php';
 ?>
 
 <style>
-    /* Top Metrics Grid */
+    /* Top Metrics Grid - Industrial Style */
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
-    .card { background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid var(--accent); }
-    .card h3 { margin: 0 0 0.5rem 0; color: var(--text-light); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; }
-    .card .value { font-size: 2.5rem; font-weight: bold; color: var(--text-main); }
+    .card { 
+        background: #fff; 
+        padding: 1.5rem; 
+        border-radius: 2px; /* Sharper edges */
+        box-shadow: 2px 2px 0px rgba(0,0,0,0.05); /* Blocky shadow */
+        border: 1px solid #d1d5db;
+        border-top: 4px solid var(--accent); /* Red top accent */
+    }
+    .card h3 { margin: 0 0 0.5rem 0; color: var(--text-light); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+    .card .value { font-size: 2.5rem; font-weight: 900; color: var(--text-main); font-family: monospace; }
     
     /* Lower Dashboard Sections */
     .dashboard-sections { display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; margin-top: 2rem; }
     @media (max-width: 850px) { .dashboard-sections { grid-template-columns: 1fr; } }
     
-    .section-card { background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .section-card h3 { margin-top: 0; margin-bottom: 1.2rem; color: var(--text-main); border-bottom: 2px solid #f3f4f6; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .section-card { 
+        background: #fff; 
+        padding: 1.5rem; 
+        border-radius: 2px; 
+        border: 1px solid #d1d5db;
+        box-shadow: 2px 2px 0px rgba(0,0,0,0.05);
+    }
+    .section-card h3 { 
+        margin-top: 0; 
+        margin-bottom: 1.5rem; 
+        color: var(--text-main); 
+        border-bottom: 2px solid #e5e7eb; 
+        padding-bottom: 0.75rem; 
+        display: flex; 
+        align-items: center; 
+        gap: 0.5rem; 
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 1rem;
+    }
     
-    /* Quick Actions */
+    /* Quick Actions - Grayscale & Red */
     .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .action-btn { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; background: #f9fafb; color: var(--text-main); padding: 1rem; border-radius: 6px; text-decoration: none; font-weight: 500; border: 1px solid #e5e7eb; transition: all 0.2s; text-align: center; }
-    .action-btn i { font-size: 1.5rem; }
-    .action-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    .action-btn.blue:hover { border-color: #3b82f6; color: #1d4ed8; }
-    .action-btn.green:hover { border-color: #10b981; color: #047857; }
-    .action-btn.orange:hover { border-color: #f59e0b; color: #b45309; }
-    .action-btn.purple:hover { border-color: #8b5cf6; color: #6d28d9; }
-    .action-btn.blue i { color: #3b82f6; }
-    .action-btn.green i { color: #10b981; }
-    .action-btn.orange i { color: #f59e0b; }
-    .action-btn.purple i { color: #8b5cf6; }
+    .action-btn { 
+        display: flex; flex-direction: column; align-items: center; gap: 0.75rem; 
+        background: #f3f4f6; color: var(--text-main); padding: 1.25rem 1rem; 
+        border-radius: 2px; text-decoration: none; font-weight: 600; 
+        border: 1px solid #d1d5db; transition: all 0.2s; text-align: center; 
+        text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.05em;
+    }
+    .action-btn i { font-size: 1.75rem; color: #4b5563; transition: color 0.2s; }
+    
+    /* Industrial Hover Effects */
+    .action-btn:hover { background: #fff; border-color: var(--accent); box-shadow: 2px 2px 0px rgba(220, 38, 38, 0.2); transform: translateY(-2px); }
+    .action-btn:hover i { color: var(--accent); }
 
     /* Recent Payments Table */
     .recent-table { width: 100%; border-collapse: collapse; }
-    .recent-table th, .recent-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #f3f4f6; font-size: 0.9em; }
-    .recent-table th { color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.8em; }
+    .recent-table th, .recent-table td { padding: 0.85rem; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 0.9em; }
+    .recent-table th { color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75em; font-weight: 700; background: #f9fafb; }
+    .recent-table tr:hover td { background: #f9fafb; }
     .recent-table tr:last-child td { border-bottom: none; }
-    .method-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.85em; font-weight: 600; white-space: nowrap; }
-    .method-gcash { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-    .method-cash { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    
+    /* Industrial Badges */
+    .method-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 2px; font-size: 0.8em; font-weight: 700; text-transform: uppercase; white-space: nowrap; border: 1px solid; }
+    .method-gcash { background: #f3f4f6; color: #1f2937; border-color: #4b5563; } /* Steel Badge */
+    .method-cash { background: #fff; color: var(--accent); border-color: var(--accent); } /* Red Badge */
 </style>
 
 <div class="wrapper">
@@ -79,55 +108,59 @@ include 'includes/navbar.php';
     <div class="main-content">
         <?php include 'includes/alerts.php'; ?>
         
-        <h2 style="margin-top: 0;">Dashboard Overview</h2>
+        <h2 style="margin-top: 0; color: #111827; text-transform: uppercase; font-weight: 900; letter-spacing: 0.05em;">Shop Operations</h2>
         
+        <!-- Top Metrics Widget -->
         <div class="grid">
             <div class="card">
-                <h3>Total Customers</h3>
+                <h3><i class="fa-solid fa-users" style="color: #6b7280; margin-right: 5px;"></i> Customers</h3>
                 <div class="value"><?php echo number_format($totalCustomers); ?></div>
             </div>
             <div class="card">
-                <h3>Registered Vehicles</h3>
+                <h3><i class="fa-solid fa-car" style="color: #6b7280; margin-right: 5px;"></i> Vehicles</h3>
                 <div class="value"><?php echo number_format($totalVehicles); ?></div>
             </div>
             <div class="card">
-                <h3>Active Mechanics</h3>
+                <h3><i class="fa-solid fa-wrench" style="color: #6b7280; margin-right: 5px;"></i> Mechanics</h3>
                 <div class="value"><?php echo number_format($totalMechanics); ?></div>
             </div>
-            <div class="card">
-                <h3>Pending Orders</h3>
-                <div class="value" style="color: <?php echo $pendingOrders > 0 ? '#f59e0b' : 'var(--text-main)'; ?>;">
+            <div class="card" style="border-top-color: <?php echo $pendingOrders > 0 ? 'var(--accent)' : '#9ca3af'; ?>;">
+                <h3><i class="fa-solid fa-clipboard-list" style="color: #6b7280; margin-right: 5px;"></i> Pending Orders</h3>
+                <div class="value" style="color: <?php echo $pendingOrders > 0 ? 'var(--accent)' : 'var(--text-main)'; ?>;">
                     <?php echo number_format($pendingOrders); ?>
                 </div>
             </div>
         </div>
 
+        <!-- Lower Dashboard Sections -->
         <div class="dashboard-sections">
             
+            <!-- Quick Actions -->
             <div class="section-card">
-                <h3><i class="fa-solid" style="color: #f59e0b;"></i> Quick Actions</h3>
+                <h3><i class="fa-solid fa-bolt" style="color: var(--accent);"></i> Quick Actions</h3>
                 <div class="quick-actions">
-                    <a href="orders/index.php" class="action-btn blue">
+                    <a href="orders/index.php" class="action-btn">
                         <i class="fa-solid fa-file-invoice"></i>
                         New Order
                     </a>
-                    <a href="payments/index.php" class="action-btn green">
+                    <a href="payments/index.php" class="action-btn">
                         <i class="fa-solid fa-money-bill-wave"></i>
                         Log Payment
                     </a>
-                    <a href="servicerecords/index.php" class="action-btn purple">
-                        <i class="fa-solid fa-wrench"></i>
+                    <a href="servicerecords/index.php" class="action-btn">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
                         New Repair
                     </a>
-                    <a href="customers/index.php" class="action-btn orange">
+                    <a href="customers/index.php" class="action-btn">
                         <i class="fa-solid fa-user-plus"></i>
                         Add Customer
                     </a>
                 </div>
             </div>
 
+            <!-- Recent Payments -->
             <div class="section-card">
-                <h3><i class="fa-solid fa-clock-rotate-left" style="color: var(--accent);"></i> Recent Payments</h3>
+                <h3><i class="fa-solid fa-receipt" style="color: #6b7280;"></i> Recent Transactions</h3>
                 <div style="overflow-x: auto;">
                     <table class="recent-table">
                         <thead>
@@ -141,14 +174,14 @@ include 'includes/navbar.php';
                         <tbody>
                             <?php if (empty($recentPayments)): ?>
                                 <tr>
-                                    <td colspan="4" style="text-align: center; color: #9ca3af; padding: 2rem;">No recent payments recorded.</td>
+                                    <td colspan="4" style="text-align: center; color: #9ca3af; padding: 2rem; font-style: italic;">No recent payments recorded.</td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($recentPayments as $rp): ?>
                                     <tr>
-                                        <td style="color: #4b5563;"><?php echo htmlspecialchars($rp['PaymentDate']); ?></td>
-                                        <td style="font-weight: 500; color: #111827;"><?php echo htmlspecialchars($rp['CustomerName']); ?></td>
-                                        <td style="font-weight: bold; color: #0369a1;">₱<?php echo number_format($rp['AmountPaid'], 2); ?></td>
+                                        <td style="color: #6b7280; font-family: monospace;"><?php echo htmlspecialchars($rp['PaymentDate']); ?></td>
+                                        <td style="font-weight: 600; color: #111827;"><?php echo htmlspecialchars($rp['CustomerName']); ?></td>
+                                        <td style="font-weight: 800; color: #111827;">₱<?php echo number_format($rp['AmountPaid'], 2); ?></td>
                                         <td>
                                             <?php if ($rp['PaymentMethod'] === 'GCash'): ?>
                                                 <span class="method-badge method-gcash"><i class="fa-solid fa-mobile-screen"></i> GCash</span>
@@ -166,7 +199,7 @@ include 'includes/navbar.php';
                 </div>
                 <?php if (!empty($recentPayments)): ?>
                     <div style="text-align: right; margin-top: 1rem;">
-                        <a href="payments/index.php" style="color: var(--accent); text-decoration: none; font-size: 0.9em; font-weight: 500;">View All Payments &rarr;</a>
+                        <a href="payments/index.php" style="color: var(--accent); text-decoration: none; font-size: 0.85em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">View All Payments &rarr;</a>
                     </div>
                 <?php endif; ?>
             </div>

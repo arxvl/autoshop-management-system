@@ -111,7 +111,7 @@ include '../includes/navbar.php';
             <h2 style="margin: 0;">Master Vehicles Directory</h2>
         </div>
 
-        <div style="background: #e0f2fe; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; color: #0369a1; font-size: 0.9em; border: 1px solid #bae6fd;">
+        <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; color: #4b5563; font-size: 0.9em; border: 1px solid #e5e7eb;">
             <strong><i class="fa-solid fa-circle-info"></i> Notice:</strong> This is a read-only master directory of all registered vehicles. To add a new vehicle or edit specific engine details, please use the Add buttons below to navigate to the specific pages.
         </div>
         

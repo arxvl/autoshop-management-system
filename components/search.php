@@ -9,7 +9,7 @@ $placeholder = isset($searchPlaceholder) ? $searchPlaceholder : "Search...";
     .search-input { padding: 0.6rem 1rem; border: 1px solid #d1d5db; border-radius: 4px; width: 300px; outline: none; }
     .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
     .btn-search { background: var(--accent); color: white; border: none; padding: 0.6rem 1rem; border-radius: 4px; cursor: pointer; }
-    .btn-search:hover { background: #2563eb; }
+    .btn-search:hover { background: #8a241f; }
 </style>
 
 <div class="search-container">

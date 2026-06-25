@@ -100,9 +100,9 @@ foreach ($tableData as &$row) {
     $row['TotalPartsCost'] = "₱" . number_format($row['TotalPartsCost'], 2);
     
     if (!empty($row['OwnedVehicles'])) {
-        $badge = " 🚗 " . $row['OwnedVehicles'];
+        $badge = " :: " . $row['OwnedVehicles'];
     } else {
-        $badge = " 🚶 Walk-in";
+        $badge = " :: Walk-in";
     }
     $row['CustomerDisplay'] = $row['CustomerName'] . $badge;
 }

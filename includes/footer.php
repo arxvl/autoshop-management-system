@@ -6,7 +6,6 @@
 
 <script>
     // --- Global Modal Functions ---
-    // This ensures that Add, Edit, and Delete modals work on EVERY page
     function openModal(id) { 
         const modal = document.getElementById(id);
         if (modal) {
@@ -31,12 +30,11 @@
         alerts.forEach(alert => {
             setTimeout(() => {
                 alert.style.opacity = '0';
-                setTimeout(() => alert.style.display = 'none', 300); // Wait for fade transition
+                setTimeout(() => alert.style.display = 'none', 300); 
             }, 4000);
         });
 
         // 2. Global Status Badge Renderer
-        // Converts plain text statuses in any table into colorful CSS badges
         const badgeStatuses = ['Pending', 'In Progress', 'Completed', 'Cancelled', 'Paid', 'Partial', 'Refunded'];
         const cells = document.querySelectorAll("td");
         
